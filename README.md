@@ -9,7 +9,6 @@ The `S3_Signer` class is designed to streamline the process of generating pre-si
 * **Extra Query Parameters:** Enhance the generated S3 URL by appending extra query string parameters.
 * **Expansive S3 Compatibility:** Not just limited to Cloudflare R2, the class is meticulously engineered to synchronize with a plethora of S3-Compatible storage solutions like Linode, DigitalOcean Spaces, BackBlaze, and more.
 
-
 ## Installation and set up
 
 The extension in question needs to have a `composer.json` file, specifically with the following:
