@@ -27,7 +27,7 @@
  * This class offers a streamlined process for obtaining secure access to S3 resources, ideal for
  * applications requiring temporary access or sharing links.
  *
- * @package     arraypress/s3-url-signer
+ * @package     arraypress/s3-signer
  * @copyright   Copyright (c) 2023, ArrayPress Limited
  * @license     GPL2+
  * @since       1.0.0
@@ -52,7 +52,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\S3_Signer' ) ) :
 	 *
 	 * Provides an interface to generate pre-signed S3 URLs.
 	 */
-	class -S3_Signer {
+	class S3_Signer {
 
 		/**
 		 * The S3 Access Key ID used to identify the account making the request.
@@ -145,7 +145,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\S3_Signer' ) ) :
 		private $time;
 
 		/**
-		 * S3_Signer constructor initializes class properties.
+		 * Initializes the S3_Signer class properties.
 		 *
 		 * @param string $access_key         The S3 Access Key ID.
 		 * @param string $secret_key         The S3 Secret Key.
@@ -154,6 +154,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\S3_Signer' ) ) :
 		 * @param bool   $use_path_style     Optional. Use path-style URLs. Default is true.
 		 * @param string $extra_query_string Optional. Extra query strings for the URL.
 		 *
+		 * @throws InvalidArgumentException If the Access Key, Secret Key, or Endpoint are empty.
 		 */
 		public function __construct( string $access_key, string $secret_key, string $endpoint, string $region = 'us-west-1', bool $use_path_style = true, string $extra_query_string = '' ) {
 			if ( empty( $access_key ) || empty( $secret_key ) || empty( $endpoint ) ) {
