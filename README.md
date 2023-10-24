@@ -7,7 +7,8 @@ The `S3_Signer` class is designed to streamline the process of generating pre-si
 * **Path-Style and Virtual-Hosted Style URLs:** The library supports both URL formats, accommodating different requirements and bucket naming conventions.
 * **Configurable URL Validity:** You can set the duration for which the generated URL remains valid.
 * **Extra Query Parameters:** Enhance the generated S3 URL by appending extra query string parameters.
-* **Cloudflare R2 S3 Compatibility:** The class is designed to work seamlessly with the Cloudflare R2 storage solution.
+* **Expansive S3 Compatibility:** Not just limited to Cloudflare R2, the class is meticulously engineered to synchronize with a plethora of S3-Compatible storage solutions like Linode, DigitalOcean Spaces, BackBlaze, and more.
+
 
 ## Installation and set up
 
@@ -16,7 +17,7 @@ The extension in question needs to have a `composer.json` file, specifically wit
 ```json 
 {
   "require": {
-    "arraypress/math-query": "*"
+    "arraypress/s3-signer": "*"
   },
   "repositories": [
     {
