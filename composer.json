@@ -1,0 +1,13 @@
+{
+  "name": "arraypress/s3-signer",
+  "description": "A robust library to generate presigned URLs for various S3-compatible storage providers, including Cloudflare R2, Linode, Amazon, and more.",
+  "type": "library",
+  "license": "GPL-2.0-or-later",
+  "minimum-stability": "stable",
+  "require": {},
+  "autoload": {
+    "psr-4": {
+      "ArrayPress\\Utils\\": "src/"
+    }
+  }
+}
