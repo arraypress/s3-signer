@@ -128,11 +128,11 @@ if ( ! class_exists( __NAMESPACE__ . '\\S3_Signer' ) ) :
 		private $object;
 
 		/**
-		 * Duration for which the pre-signed URL should remain valid, in seconds.
+		 * Duration for which the pre-signed URL should remain valid, in minutes.
 		 *
 		 * @var int
 		 */
-		private $period = 3600;  // Default to 1 hour
+		private $period = 5;  // Default to 5 minutes
 
 		/**
 		 * Unix timestamp indicating when the current request was made.
@@ -180,13 +180,13 @@ if ( ! class_exists( __NAMESPACE__ . '\\S3_Signer' ) ) :
 		 *
 		 * @param string $bucket The name of the S3 bucket containing the object.
 		 * @param string $object The key of the object within the bucket. This can be the filename or path.
-		 * @param int    $period Optional. Duration for which the generated URL should be valid, in seconds. Default is 3600
-		 *                       seconds (1 hour).
+		 * @param int    $period Optional. Duration for which the generated URL should be valid, in minutes. Default is 5
+		 *                       minutes.
 		 *
 		 * @return string The pre-signed S3 URL.
 		 * @throws InvalidArgumentException If the bucket or object name provided is empty or invalid.
 		 */
-		public function get_object_url( string $bucket, string $object, int $period = 3600 ) {
+		public function get_object_url( string $bucket, string $object, int $period = 5 ) {
 
 			$this->time   = time();
 			$this->bucket = trim( $bucket );

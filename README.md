@@ -55,12 +55,12 @@ $signer = new ArrayPress\Utils\S3_Signer( $access_key, $secret_key, $endpoint, $
 $bucket_name = 'my-bucket';          // Input your desired bucket name here
 $object_path = 'sample-file.zip';    // Specify the object's path you want to share
 
-// Creating a pre-signed URL with a standard 1-hour expiration
+// Creating a pre-signed URL with a standard 5-minute expiration
 $signed_url = $signer->get_object_url( $bucket_name, $object_path );
 echo "Your Pre-Signed URL is: " . $signed_url . "\n";
 
 // Creating a pre-signed URL with a 2-hour expiration
-$signed_url = $signer->get_object_url( $bucket_name, $object_path, 7200 );
+$signed_url = $signer->get_object_url( $bucket_name, $object_path, 120 );
 echo "Generated Pre-Signed URL with 2 hours validity: " . $signed_url . "\n";
 ```
 
