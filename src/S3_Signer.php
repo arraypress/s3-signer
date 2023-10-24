@@ -37,9 +37,6 @@
 
 namespace ArrayPress\Utils;
 
-// Exit if accessed directly
-defined( 'ABSPATH' ) || exit;
-
 use InvalidArgumentException;
 
 /**
