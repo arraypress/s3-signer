@@ -56,21 +56,21 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @var string
 		 */
-		private $access_key;
+		private string $access_key;
 
 		/**
 		 * The S3 Secret Key associated with the access key for request authentication.
 		 *
 		 * @var string
 		 */
-		private $secret_key;
+		private string $secret_key;
 
 		/**
 		 * The endpoint to which S3 requests are sent.
 		 *
 		 * @var string
 		 */
-		private $endpoint;
+		private string $endpoint;
 
 		/**
 		 * The region where the S3 bucket resides.
@@ -81,7 +81,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @var string
 		 */
-		private $region = 'us-west-1';
+		private string $region = 'us-west-1';
 
 		/**
 		 * Specifies whether to use path-style or virtual-hosted style for the S3 URL.
@@ -104,42 +104,42 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @var bool
 		 */
-		private $use_path_style = true;
+		private bool $use_path_style = true;
 
 		/**
 		 * Any extra query string to be appended to the S3 URL.
 		 *
 		 * @var string
 		 */
-		private $extra_query_string = '';
+		private string $extra_query_string = '';
 
 		/**
 		 * The S3 bucket name.
 		 *
 		 * @var string
 		 */
-		private $bucket;
+		private string $bucket;
 
 		/**
 		 * The key or path of the object in the bucket.
 		 *
 		 * @var string
 		 */
-		private $object;
+		private string $object;
 
 		/**
 		 * Duration for which the pre-signed URL should remain valid, in minutes.
 		 *
 		 * @var int
 		 */
-		private $period = 5;  // Default to 5 minutes
+		private int $period = 5;  // Default to 5 minutes
 
 		/**
 		 * Unix timestamp indicating when the current request was made.
 		 *
 		 * @var int
 		 */
-		private $time;
+		private int $time;
 
 		/**
 		 * Initializes the Signer class properties.
@@ -186,7 +186,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 * @return string The pre-signed S3 URL.
 		 * @throws InvalidArgumentException If the bucket or object name provided is empty or invalid.
 		 */
-		public function get_object_url( string $bucket, string $object, int $period = 5 ) {
+		public function get_object_url( string $bucket, string $object, int $period = 5 ): string {
 
 			$this->time   = time();
 			$this->bucket = trim( $bucket );
