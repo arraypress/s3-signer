@@ -1,6 +1,6 @@
 <?php
 /**
- * The S3_Signer class provides an interface to generate pre-signed S3 URLs, allowing temporary
+ * The Signer class provides an interface to generate pre-signed S3 URLs, allowing temporary
  * access to S3 objects without requiring AWS credentials or permissions.
  *
  * This class aids in the creation of signed URLs to access resources in S3 securely. It supports both
@@ -16,12 +16,12 @@
  *
  * @example
  * // Basic Usage:
- * $signer = new S3_Signer($accessKey, $secretKey, $endpoint);
+ * $signer = new Signer($accessKey, $secretKey, $endpoint);
  * $signedUrl = $signer->get_object_url('my-bucket', 'path/to/my-object');
  *
  * @example
  * // With Custom Duration:
- * $signer = new S3_Signer($accessKey, $secretKey, $endpoint);
+ * $signer = new Signer($accessKey, $secretKey, $endpoint);
  * $signedUrl = $signer->get_object_url('my-bucket', 'path/to/my-object', 60); // 1 hour validity
  *
  * This class offers a streamlined process for obtaining secure access to S3 resources, ideal for
@@ -35,21 +35,21 @@
  * @description Generates pre-signed S3 URLs for temporary object access.
  */
 
-namespace ArrayPress\Utils;
+namespace ArrayPress\Utils\S3;
 
 use InvalidArgumentException;
 
 /**
- * Check if the class `S3_Signer` is defined, and if not, define it.
+ * Check if the class `Signer` is defined, and if not, define it.
  */
-if ( ! class_exists( __NAMESPACE__ . '\\S3_Signer' ) ) :
+if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 
 	/**
-	 * S3_Signer
+	 * Signer
 	 *
 	 * Provides an interface to generate pre-signed S3 URLs.
 	 */
-	class S3_Signer {
+	class Signer {
 
 		/**
 		 * The S3 Access Key ID used to identify the account making the request.
@@ -142,7 +142,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\S3_Signer' ) ) :
 		private $time;
 
 		/**
-		 * Initializes the S3_Signer class properties.
+		 * Initializes the Signer class properties.
 		 *
 		 * @param string $access_key         The S3 Access Key ID.
 		 * @param string $secret_key         The S3 Secret Key.
