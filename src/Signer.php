@@ -125,7 +125,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @var string
 		 */
-		private string $object;
+		private string $object_key;
 
 		/**
 		 * Duration for which the pre-signed URL should remain valid, in minutes.
@@ -178,34 +178,34 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * The `use_path_style` property determines which style to use.
 		 *
-		 * @param string $bucket The name of the S3 bucket containing the object.
-		 * @param string $object The key of the object within the bucket. This can be the filename or path.
-		 * @param int    $period Optional. Duration for which the generated URL should be valid, in minutes. Default is 5
-		 *                       minutes.
+		 * @param string $bucket     The name of the S3 bucket containing the object.
+		 * @param string $object_key The key of the object within the bucket. This can be the filename or path.
+		 * @param int    $period     Optional. Duration for which the generated URL should be valid, in minutes. Default is 5
+		 *                           minutes.
 		 *
 		 * @return string The pre-signed S3 URL.
 		 * @throws InvalidArgumentException If the bucket or object name provided is empty or invalid.
 		 */
-		public function get_object_url( string $bucket, string $object, int $period = 5 ): string {
+		public function get_object_url( string $bucket, string $object_key, int $period = 5 ): string {
 
-			$this->time   = time();
-			$this->bucket = trim( $bucket );
-			$this->object = $this->encode_object_name( $object );
-			$this->period = $this->convert_period_to_seconds( $period );
+			$this->time       = time();
+			$this->bucket     = trim( $bucket );
+			$this->object_key = $this->encode_object_name( $object_key );
+			$this->period     = $this->convert_period_to_seconds( $period );
 
 			// Validate bucket and object.
 			if ( empty( $this->bucket ) ) {
 				throw new InvalidArgumentException( "The bucket name provided is empty or invalid." );
 			}
 
-			if ( empty( $this->object ) ) {
+			if ( empty( $this->object_key ) ) {
 				throw new InvalidArgumentException( "The object name provided is empty or invalid." );
 			}
 
 			if ( $this->use_path_style ) {
-				$url = 'https://' . $this->endpoint . '/' . $this->bucket . '/' . $this->object . '?';
+				$url = 'https://' . $this->endpoint . '/' . $this->bucket . '/' . $this->object_key . '?';
 			} else {
-				$url = 'https://' . $this->bucket . '.' . $this->endpoint . '/' . $this->object . '?';
+				$url = 'https://' . $this->bucket . '.' . $this->endpoint . '/' . $this->object_key . '?';
 			}
 
 			$url .= $this->get_query_strings();
@@ -221,7 +221,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @return int Returns the period in seconds.
 		 */
-		private function convert_period_to_seconds( int $period ): int {
+		protected function convert_period_to_seconds( int $period ): int {
 			return $period * 60;
 		}
 
@@ -230,13 +230,13 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @return string
 		 */
-		private function get_canonical_request(): string {
+		protected function get_canonical_request(): string {
 			$request = "GET\n";
 
 			if ( $this->use_path_style ) {
-				$request .= '/' . $this->bucket . '/' . $this->object . "\n";
+				$request .= '/' . $this->bucket . '/' . $this->object_key . "\n";
 			} else {
-				$request .= '/' . $this->object . "\n";
+				$request .= '/' . $this->object_key . "\n";
 			}
 
 			$request .= $this->get_query_strings() . "\n";
@@ -258,7 +258,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @return string
 		 */
-		private function get_query_strings(): string {
+		protected function get_query_strings(): string {
 			$url = 'X-Amz-Algorithm=AWS4-HMAC-SHA256';
 			$url .= '&X-Amz-Credential=' . urlencode( $this->access_key . '/' . $this->get_credential() );
 			$url .= '&X-Amz-Date=' . gmdate( 'Ymd\THis\Z', $this->time );
@@ -277,7 +277,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @return string
 		 */
-		private function get_credential(): string {
+		protected function get_credential(): string {
 			$credential = date( 'Ymd', $this->time ) . '/';
 			$credential .= $this->region . '/s3/aws4_request';
 
@@ -289,7 +289,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @return string
 		 */
-		private function get_string_to_sign(): string {
+		protected function get_string_to_sign(): string {
 			$string = 'AWS4-HMAC-SHA256' . "\n";
 			$string .= gmdate( 'Ymd\THis\Z', $this->time ) . "\n";
 			$string .= $this->get_credential() . "\n";
@@ -305,7 +305,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @return string
 		 */
-		private function hex16( $value ): string {
+		protected function hex16( $value ): string {
 			$result = unpack( 'H*', $value );
 
 			return reset( $result );
@@ -316,7 +316,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @return string
 		 */
-		private function generate_signature(): string {
+		protected function generate_signature(): string {
 			$date_key                = hash_hmac( 'sha256', date( 'Ymd', $this->time ), 'AWS4' . $this->secret_key, true );
 			$date_region_key         = hash_hmac( 'sha256', $this->region, $date_key, true );
 			$date_region_service_key = hash_hmac( 'sha256', 's3', $date_region_key, true );
@@ -333,7 +333,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @return string Returns the encoded key
 		 */
-		private function encode_object_name( string $key ): string {
+		protected function encode_object_name( string $key ): string {
 			$key = str_replace( '+', ' ', $key );
 
 			return str_replace( '%2F', '/', rawurlencode( $key ) );
