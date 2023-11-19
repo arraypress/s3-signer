@@ -132,7 +132,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @var int
 		 */
-		private int $period = 5;  // Default to 5 minutes
+		private int $duration = 5;  // Default to 5 minutes
 
 		/**
 		 * Unix timestamp indicating when the current request was made.
@@ -142,28 +142,90 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		private int $time;
 
 		/**
-		 * Initializes the Signer class properties.
+		 * Constructor for the Signer class, responsible for initializing properties
+		 * related to Amazon S3 service interactions.
 		 *
-		 * @param string $access_key         The S3 Access Key ID.
-		 * @param string $secret_key         The S3 Secret Key.
-		 * @param string $endpoint           The S3 server endpoint.
-		 * @param string $region             Optional. The S3 bucket's region. Default is 'us-west-1'.
-		 * @param bool   $use_path_style     Optional. Use path-style URLs. Default is true.
-		 * @param string $extra_query_string Optional. Extra query strings for the URL.
+		 * This constructor sets up the necessary properties required for generating pre-signed
+		 * S3 URLs and for handling other S3 related operations. It accepts an array of
+		 * arguments and merges them with default values. Each argument is validated for
+		 * type and value correctness. If any required argument is missing or invalid,
+		 * an InvalidArgumentException is thrown.
 		 *
-		 * @throws InvalidArgumentException If the Access Key, Secret Key, or Endpoint are empty.
+		 * @param array $args Associative array of arguments with the following keys:
+		 *                    - 'access_key' (string): Mandatory. The S3 Access Key ID used for authentication.
+		 *                    - 'secret_key' (string): Mandatory. The S3 Secret Key associated with the access key.
+		 *                    - 'endpoint' (string): Mandatory. The S3 server endpoint URL.
+		 *                    - 'region' (string): Optional. The region where the S3 bucket resides. Default is 'us-west-1'.
+		 *                    - 'use_path_style' (bool): Optional. Flag to indicate whether to use path-style URLs. Default is true.
+		 *                    - 'extra_query_string' (string): Optional. Additional query string parameters to append to the URL.
+		 *                    - 'bucket' (string): Optional. The name of the S3 bucket.
+		 *                    - 'object_key' (string): Optional. The key/path of the object within the S3 bucket.
+		 *                    - 'duration' (int): Optional. Duration in minutes for which the pre-signed URL is valid. Must be a positive integer.
+		 *
+		 * @throws InvalidArgumentException If any mandatory argument is empty or if an argument is of an incorrect type.
 		 */
-		public function __construct( string $access_key, string $secret_key, string $endpoint, string $region = 'us-west-1', bool $use_path_style = true, string $extra_query_string = '' ) {
-			if ( empty( $access_key ) || empty( $secret_key ) || empty( $endpoint ) ) {
-				throw new InvalidArgumentException( 'Invalid arguments provided. Access Key, Secret Key, and Endpoint are mandatory.' );
+		public function __construct( array $args ) {
+			$defaults = [
+				'access_key'         => '',
+				'secret_key'         => '',
+				'endpoint'           => '',
+				'region'             => 'us-west-1',
+				'use_path_style'     => true,
+				'extra_query_string' => '',
+				'bucket'             => '',
+				'object_key'         => '',
+				'duration'           => 5
+			];
+
+			$args = array_merge( $defaults, $args );
+
+			// Validate each argument individually
+			if ( empty( trim( $args['access_key'] ) ) ) {
+				throw new InvalidArgumentException( "Access Key is required and cannot be empty." );
 			}
 
-			$this->access_key         = trim( $access_key );
-			$this->secret_key         = trim( $secret_key );
-			$this->endpoint           = trim( $endpoint );
-			$this->region             = trim( $region );
-			$this->use_path_style     = $use_path_style;
-			$this->extra_query_string = $extra_query_string;
+			if ( empty( trim( $args['secret_key'] ) ) ) {
+				throw new InvalidArgumentException( "Secret Key is required and cannot be empty." );
+			}
+
+			if ( empty( trim( $args['endpoint'] ) ) ) {
+				throw new InvalidArgumentException( "Endpoint is required and cannot be empty." );
+			}
+
+			if ( ! is_string( $args['region'] ) || empty( trim( $args['region'] ) ) ) {
+				throw new InvalidArgumentException( "Region must be a non-empty string." );
+			}
+
+			if ( ! is_bool( $args['use_path_style'] ) ) {
+				throw new InvalidArgumentException( "use_path_style must be a boolean." );
+			}
+
+			if ( ! is_string( $args['extra_query_string'] ) ) {
+				throw new InvalidArgumentException( "extra_query_string must be a string." );
+			}
+
+			if ( ! is_string( $args['bucket'] ) ) {
+				throw new InvalidArgumentException( "Bucket must be a string." );
+			}
+
+			if ( ! is_string( $args['object_key'] ) ) {
+				throw new InvalidArgumentException( "Object key must be a string." );
+			}
+
+			if ( ! is_int( $args['duration'] ) || $args['duration'] <= 0 ) {
+				throw new InvalidArgumentException( "Invalid duration value. It should be a positive integer representing a duration." );
+			}
+
+			// Assign validated values to class properties
+			$this->access_key         = trim( $args['access_key'] );
+			$this->secret_key         = trim( $args['secret_key'] );
+			$this->endpoint           = trim( $args['endpoint'] );
+			$this->region             = trim( $args['region'] );
+			$this->use_path_style     = $args['use_path_style'];
+			$this->extra_query_string = $args['extra_query_string'];
+			$this->bucket             = trim( $args['bucket'] );
+			$this->object_key         = trim( $args['object_key'] );
+			$this->duration           = $args['duration'];
 		}
 
 		/**
@@ -178,20 +240,21 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * The `use_path_style` property determines which style to use.
 		 *
-		 * @param string $bucket     The name of the S3 bucket containing the object.
-		 * @param string $object_key The key of the object within the bucket. This can be the filename or path.
-		 * @param int    $period     Optional. Duration for which the generated URL should be valid, in minutes. Default is 5
-		 *                           minutes.
+		 * @param string   $bucket     Optional. The name of the S3 bucket containing the object.
+		 * @param string   $object_key Optional. The key of the object within the bucket.
+		 * @param int|null $duration   Optional. Duration for which the generated URL should be valid, in minutes.
 		 *
 		 * @return string The pre-signed S3 URL.
 		 * @throws InvalidArgumentException If the bucket or object name provided is empty or invalid.
 		 */
-		public function get_object_url( string $bucket, string $object_key, int $period = 5 ): string {
+		public function get_object_url( string $bucket = '', string $object_key = '', ?int $duration = null ): string {
+			$this->time = time();
 
-			$this->time       = time();
-			$this->bucket     = trim( $bucket );
-			$this->object_key = $this->encode_object_name( $object_key );
-			$this->period     = $this->convert_period_to_seconds( $period );
+			$this->bucket     = ! empty( $bucket ) ? trim( $bucket ) : $this->bucket;
+			$this->object_key = ! empty( $object_key ) ? trim( $object_key ) : $this->object_key;
+
+			$this->object_key = $this->encode_object_name( $this->object_key );
+			$this->duration   = $this->convert_duration_to_seconds( $duration !== null ? $duration : $this->duration );
 
 			// Validate bucket and object.
 			if ( empty( $this->bucket ) ) {
@@ -215,14 +278,14 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		}
 
 		/**
-		 * Converts a given period in minutes to seconds.
+		 * Converts a given duration in minutes to seconds.
 		 *
-		 * @param int $period The period in minutes.
+		 * @param int $duration The duration in minutes.
 		 *
-		 * @return int Returns the period in seconds.
+		 * @return int Returns the duration in seconds.
 		 */
-		protected function convert_period_to_seconds( int $period ): int {
-			return $period * 60;
+		protected function convert_duration_to_seconds( int $duration ): int {
+			return $duration * 60;
 		}
 
 		/**
@@ -262,7 +325,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 			$url = 'X-Amz-Algorithm=AWS4-HMAC-SHA256';
 			$url .= '&X-Amz-Credential=' . urlencode( $this->access_key . '/' . $this->get_credential() );
 			$url .= '&X-Amz-Date=' . gmdate( 'Ymd\THis\Z', $this->time );
-			$url .= '&X-Amz-Expires=' . $this->period;
+			$url .= '&X-Amz-Expires=' . $this->duration;
 			$url .= '&X-Amz-SignedHeaders=host';
 
 			if ( ! empty( $this->extra_query_string ) ) {

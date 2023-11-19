@@ -15,59 +15,44 @@ use Exception, InvalidArgumentException;
 
 if ( ! function_exists( 'get_object_url' ) ) {
 	/**
-	 * Parse the provided arguments to generate a signed URL for an S3 object.
+	 * Generates a pre-signed URL for accessing an S3 object, using the provided arguments.
 	 *
-	 * @param array $args               {
-	 *                                  An array of arguments.
+	 * This method accepts a range of arguments for S3 authentication and URL construction,
+	 * allowing optional configuration for region specificity, URL style, query string augmentation,
+	 * and URL validity duration. It returns a URL string that grants temporary access to the specified S3 object.
+	 * In case of an error, a callback function can be executed for custom error handling.
 	 *
-	 * @type string $access_key         The S3 Access Key ID.
-	 * @type string $secret_key         The S3 Secret Key.
-	 * @type string $endpoint           The S3 server endpoint.
-	 * @type string $region             Optional. The S3 bucket's region. Default is 'us-west-1'.
-	 * @type bool   $use_path_style     Optional. Use path-style URLs. Default is true.
-	 * @type string $extra_query_string Optional. Extra query strings for the URL.
-	 * @type string $bucket             The S3 bucket name.
-	 * @type string $object_key         The S3 object key.
-	 * @type int    $period             Optional. Period for the signed URL. Default is 5.
-	 *                                  }
+	 * @param array         $args           Associative array of arguments with keys:
+	 *                                      - 'access_key' (string, required): S3 Access Key ID for authentication.
+	 *                                      - 'secret_key' (string, required): S3 Secret Access Key corresponding to the Access Key ID.
+	 *                                      - 'endpoint' (string, required): Endpoint URL of the S3 service.
+	 *                                      - 'region' (string, optional): Region of the S3 bucket, defaulting to 'us-west-1'.
+	 *                                      - 'use_path_style' (bool, optional): Whether to use path-style URLs, defaulting to true.
+	 *                                      - 'extra_query_string' (string, optional): Extra query string parameters for the URL.
+	 *                                      - 'bucket' (string, optional): Name of the S3 bucket.
+	 *                                      - 'object_key' (string, optional): Key/path of the S3 object.
+	 *                                      - 'duration' (int, optional): Validity period of the URL in minutes, must be positive.
 	 *
-	 * @return string|false The pre-signed S3 URL or false on failure.
+	 * @param string        $bucket         Optional override for the S3 bucket name from $args.
+	 * @param string        $object_key     Optional override for the S3 object key from $args.
+	 * @param int|null      $duration       Optional override for the URL duration from $args.
+	 * @param callable|null $error_callback Optional callback for error handling, called with the exception object as an argument.
+	 *
+	 * @return string|null The signed URL on success, or null on failure.
+	 * @throws InvalidArgumentException If mandatory arguments are missing or invalid.
 	 */
-	function get_object_url( array $args ) {
-		$defaults = array(
-			'access_key'         => '',
-			'secret_key'         => '',
-			'endpoint'           => '',
-			'region'             => 'us-west-1',
-			'use_path_style'     => true,
-			'extra_query_string' => '',
-			'bucket'             => '',
-			'object_key'         => '',
-			'period'             => 5
-		);
-
-		$args = array_merge( $defaults, $args );
-
-		// Argument type validations
-		if ( ! is_string( $args['access_key'] ) || ! is_string( $args['secret_key'] ) || ! is_string( $args['endpoint'] ) ) {
-			throw new InvalidArgumentException( 'Invalid arguments provided. Access Key, Secret Key, and Endpoint are mandatory and must be strings.' );
-		}
-
-		if ( ! is_string( $args['region'] ) || ! is_bool( $args['use_path_style'] ) || ! is_string( $args['extra_query_string'] ) ) {
-			throw new InvalidArgumentException( 'Invalid arguments provided. Check types for region, use_path_style, and extra_query_string.' );
-		}
-
-		$signer = new Signer( $args['access_key'], $args['secret_key'], $args['endpoint'], $args['region'], $args['use_path_style'], $args['extra_query_string'] );
-
+	function get_object_url( array $args, string $bucket = '', string $object_key = '', ?int $duration = null, ?callable $error_callback = null ): ?string {
 		try {
-			return $signer->get_object_url( $args['bucket'], $args['object_key'], $args['period'] );
+			$signer = new Signer( $args );
+
+			return $signer->get_object_url( $bucket, $object_key, $duration );
 		} catch ( Exception $e ) {
-			if ( isset( $args['error_callback'] ) && is_callable( $args['error_callback'] ) ) {
-				call_user_func( $args['error_callback'], $e );
+			if ( is_callable( $error_callback ) ) {
+				call_user_func( $error_callback, $e );
 			}
 
 			// Handle the exception or log it if needed
-			return false;
+			return null; // Return null on failure
 		}
 	}
 }
