@@ -265,11 +265,10 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 				throw new InvalidArgumentException( "The object name provided is empty or invalid." );
 			}
 
-			if ( $this->use_path_style ) {
-				$url = 'https://' . $this->endpoint . '/' . $this->bucket . '/' . $this->object_key . '?';
-			} else {
-				$url = 'https://' . $this->bucket . '.' . $this->endpoint . '/' . $this->object_key . '?';
-			}
+			$url = $this->use_path_style
+				? 'https://' . $this->endpoint . '/' . $this->bucket . '/' . $this->object_key . '?'
+				: 'https://' . $this->bucket . '.' . $this->endpoint . '/' . $this->object_key . '?';
+
 
 			$url .= $this->get_query_strings();
 			$url .= '&X-Amz-Signature=' . $this->generate_signature();
@@ -296,19 +295,15 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		protected function get_canonical_request(): string {
 			$request = "GET\n";
 
-			if ( $this->use_path_style ) {
-				$request .= '/' . $this->bucket . '/' . $this->object_key . "\n";
-			} else {
-				$request .= '/' . $this->object_key . "\n";
-			}
+			$request .= $this->use_path_style
+				? '/' . $this->bucket . '/' . $this->object_key . "\n"
+				: '/' . $this->object_key . "\n";
 
 			$request .= $this->get_query_strings() . "\n";
 
-			if ( $this->use_path_style ) {
-				$request .= 'host:' . $this->endpoint . "\n\n";
-			} else {
-				$request .= 'host:' . $this->bucket . '.' . $this->endpoint . "\n\n";
-			}
+			$request .= $this->use_path_style
+				? 'host:' . $this->endpoint . "\n\n"
+				: 'host:' . $this->bucket . '.' . $this->endpoint . "\n\n";
 
 			$request .= "host\n";
 			$request .= 'UNSIGNED-PAYLOAD';
