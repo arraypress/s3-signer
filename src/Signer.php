@@ -269,11 +269,43 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 				? 'https://' . $this->endpoint . '/' . $this->bucket . '/' . $this->object_key . '?'
 				: 'https://' . $this->bucket . '.' . $this->endpoint . '/' . $this->object_key . '?';
 
-
 			$url .= $this->get_query_strings();
 			$url .= '&X-Amz-Signature=' . $this->generate_signature();
 
 			return $url;
+		}
+
+		/**
+		 * Checks if an object exists in the specified S3 bucket.
+		 *
+		 * @param string $bucket     The name of the S3 bucket.
+		 * @param string $object_key The key of the object within the bucket.
+		 *
+		 * @return bool True if the object exists; false otherwise.
+		 */
+		public function object_exists( string $bucket = '', string $object_key = '', ?int $duration = null ): bool {
+
+			// Check if WordPress functions are available
+			if ( function_exists( 'wp_safe_remote_head' ) && function_exists( 'wp_remote_retrieve_response_code' ) ) {
+				// Get the pre-signed URL for the object
+				$url = $this->get_object_url( $bucket, $object_key, $duration );
+
+				// Perform an HTTP HEAD request to check if the object exists
+				$response = wp_safe_remote_head( $url );
+
+				// Check the HTTP response status code
+				if ( is_wp_error( $response ) ) {
+					// Error occurred, object might not exist or other issues
+					return false;
+				} else {
+					// Check if the response code is 200 OK, indicating the object exists
+					return wp_remote_retrieve_response_code( $response ) === 200;
+				}
+			} else {
+				// WordPress functions are not available, cannot perform the check
+				return false;
+			}
+
 		}
 
 		/**
