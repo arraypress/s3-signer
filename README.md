@@ -49,20 +49,33 @@ require_once dirname(__FILE__) . '/vendor/autoload.php';
 $access_key = 'YOUR_R2_ACCESS_KEY';   // Update with your actual CloudFlare R2 access key
 $secret_key = 'YOUR_R2_SECRET_KEY';   // Update with your actual CloudFlare R2 secret key
 $endpoint   = '{account_id}.r2.cloudflarestorage.com'; // Use your specific R2 account ID here
-$region     = 'auto'; // For CloudFlare, set region as 'auto' when creating pre-signed URLs
+$region     = 'auto';                 // For CloudFlare, set region as 'auto' when creating pre-signed URLs
+$bucket_name = 'my-bucket';           // Input your desired bucket name here
+$object_path = 'sample-file.zip';     // Specify the object's path you want to share
 
-$signer = new ArrayPress\Utils\S3\Signer( $access_key, $secret_key, $endpoint, $region );
-
-$bucket_name = 'my-bucket';          // Input your desired bucket name here
-$object_path = 'sample-file.zip';    // Specify the object's path you want to share
+// Set up the arguments for the Signer, including bucket and object_key
+$args = [
+    'access_key' => $access_key,
+    'secret_key' => $secret_key,
+    'endpoint'   => $endpoint,
+    'region'     => $region,
+    'bucket'     => $bucket_name,
+    'object_key' => $object_path
+];
 
 // Creating a pre-signed URL with a standard 5-minute expiration
-$signed_url = $signer->get_object_url( $bucket_name, $object_path );
+$signed_url = get_object_url( $args );
 echo "Your Pre-Signed URL is: " . $signed_url . "\n";
 
 // Creating a pre-signed URL with a 2-hour expiration
-$signed_url = $signer->get_object_url( $bucket_name, $object_path, 120 );
+$signed_url = get_object_url( $args, '', '', 120 );
 echo "Generated Pre-Signed URL with 2 hours validity: " . $signed_url . "\n";
+
+// Error handling callback (optional)
+$error_callback = function($e) {
+    // Handle the exception, e.g., log it
+    echo "Error generating URL: " . $e->getMessage();
+};
 ```
 
 ## Contributions

@@ -179,21 +179,28 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 
 			$args = array_merge( $defaults, $args );
 
+			// Loop through the arguments and trim only if the value is a string
+			foreach ( $args as $key => $value ) {
+				if ( is_string( $value ) ) {
+					$args[ $key ] = trim( $value );
+				}
+			}
+
 			// Validate each argument individually
-			if ( empty( trim( $args['access_key'] ) ) ) {
+			if ( empty( $args['access_key'] ) || ! is_string( $args['access_key'] ) ) {
 				throw new InvalidArgumentException( "Access Key is required and cannot be empty." );
 			}
 
-			if ( empty( trim( $args['secret_key'] ) ) ) {
+			if ( empty( $args['secret_key'] ) || ! is_string( $args['secret_key'] ) ) {
 				throw new InvalidArgumentException( "Secret Key is required and cannot be empty." );
 			}
 
-			if ( empty( trim( $args['endpoint'] ) ) ) {
+			if ( empty( $args['endpoint'] ) || ! is_string( $args['endpoint'] ) ) {
 				throw new InvalidArgumentException( "Endpoint is required and cannot be empty." );
 			}
 
-			if ( ! is_string( $args['region'] ) || empty( trim( $args['region'] ) ) ) {
-				throw new InvalidArgumentException( "Region must be a non-empty string." );
+			if ( empty( $args['region'] ) || ! is_string( $args['region'] ) ) {
+				throw new InvalidArgumentException( "Region is required and cannot be empty." );
 			}
 
 			if ( ! is_bool( $args['use_path_style'] ) ) {
@@ -212,19 +219,24 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 				throw new InvalidArgumentException( "Object key must be a string." );
 			}
 
-			if ( ! is_int( $args['duration'] ) || $args['duration'] <= 0 ) {
-				throw new InvalidArgumentException( "Invalid duration value. It should be a positive integer representing a duration." );
-			}
+			Validate::access_key( $args['access_key'] );
+			Validate::secret_key( $args['secret_key'] );
+			Validate::endpoint( $args['endpoint'] );
+			Validate::region( $args['region'] );
+			Validate::extra_query_string( $args['extra_query_string'] );
+			Validate::bucket( $args['bucket'] );
+			Validate::object_key( $args['object_key'] );
+			Validate::duration( $args['duration'] );
 
 			// Assign validated values to class properties
-			$this->access_key         = trim( $args['access_key'] );
-			$this->secret_key         = trim( $args['secret_key'] );
-			$this->endpoint           = trim( $args['endpoint'] );
-			$this->region             = trim( $args['region'] );
+			$this->access_key         = $args['access_key'];
+			$this->secret_key         = $args['secret_key'];
+			$this->endpoint           = $args['endpoint'];
+			$this->region             = $args['region'];
 			$this->use_path_style     = $args['use_path_style'];
 			$this->extra_query_string = $args['extra_query_string'];
-			$this->bucket             = trim( $args['bucket'] );
-			$this->object_key         = trim( $args['object_key'] );
+			$this->bucket             = $args['bucket'];
+			$this->object_key         = $args['object_key'];
 			$this->duration           = $args['duration'];
 		}
 
@@ -253,7 +265,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 			$this->bucket     = ! empty( $bucket ) ? trim( $bucket ) : $this->bucket;
 			$this->object_key = ! empty( $object_key ) ? trim( $object_key ) : $this->object_key;
 
-			$this->object_key = $this->encode_object_name( $this->object_key );
+			$this->object_key = Serialization::encode_object_name( $this->object_key );
 			$this->duration   = $this->convert_duration_to_seconds( $duration !== null ? $duration : $this->duration );
 
 			// Validate bucket and object.
@@ -264,6 +276,9 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 			if ( empty( $this->object_key ) ) {
 				throw new InvalidArgumentException( "The object name provided is empty or invalid." );
 			}
+
+			Validate::bucket( $this->bucket );
+			Validate::object_key( $this->object_key );
 
 			$url = $this->use_path_style
 				? 'https://' . $this->endpoint . '/' . $this->bucket . '/' . $this->object_key . '?'
@@ -414,19 +429,6 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 			$string_to_sign          = $this->get_string_to_sign();
 
 			return $this->hex16( hash_hmac( 'sha256', $string_to_sign, $signing_key, true ) );
-		}
-
-		/**
-		 * Raw URL encode a key and allow for '/' characters
-		 *
-		 * @param string $key Key to encode
-		 *
-		 * @return string Returns the encoded key
-		 */
-		protected function encode_object_name( string $key ): string {
-			$key = str_replace( '+', ' ', $key );
-
-			return str_replace( '%2F', '/', rawurlencode( $key ) );
 		}
 
 	}

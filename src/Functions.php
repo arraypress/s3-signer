@@ -11,7 +11,7 @@
 
 namespace ArrayPress\Utils\S3;
 
-use Exception, InvalidArgumentException;
+use InvalidArgumentException;
 
 if ( ! function_exists( 'get_object_url' ) ) {
 	/**
@@ -46,7 +46,7 @@ if ( ! function_exists( 'get_object_url' ) ) {
 			$signer = new Signer( $args );
 
 			return $signer->get_object_url( $bucket, $object_key, $duration );
-		} catch ( Exception $e ) {
+		} catch ( InvalidArgumentException $e ) {
 			if ( is_callable( $error_callback ) ) {
 				call_user_func( $error_callback, $e );
 			}
