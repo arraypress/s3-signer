@@ -1,81 +1,98 @@
-#  S3 URL Signing Library
+# S3 Signer Library for Pre-signed URLs
 
-The `Signer` class is designed to streamline the process of generating pre-signed S3 URLs. These URLs grant temporary access to S3 objects without the need for AWS credentials or permissions. This is especially useful for applications that require short-term access or sharing links to resources stored in an S3 bucket.
+The S3 Signer Library streamlines generating pre-signed URLs for Amazon S3 objects, facilitating secure, temporary access without directly exposing AWS credentials. This library is essential for applications requiring secure, time-limited access to S3 objects, such as sharing private files or providing temporary download links.
 
-**Key Features:**
+## Key Features
 
-* **Path-Style and Virtual-Hosted Style URLs:** The library supports both URL formats, accommodating different requirements and bucket naming conventions.
-* **Configurable URL Validity:** You can set the duration for which the generated URL remains valid.
-* **Extra Query Parameters:** Enhance the generated S3 URL by appending extra query string parameters.
-* **Expansive S3 Compatibility:** Not just limited to Cloudflare R2, the class is meticulously engineered to synchronize with a plethora of S3-Compatible storage solutions like Linode, DigitalOcean Spaces, BackBlaze, and more.
+- **Support for Path-Style and Virtual-Hosted Style URLs:** Offers flexibility in URL format to accommodate various bucket naming conventions and requirements.
+- **Configurable URL Validity:** Customize the duration for which the pre-signed URL remains valid, from minutes to days.
+- **Extra Query Parameters:** Append additional query parameters to the generated URLs for fine-grained control over access.
+- **Compatibility with S3 and S3-like Services:** Designed to work seamlessly not just with AWS S3, but also with S3-compatible services such as Cloudflare R2, making it versatile for different storage solutions.
 
-## Installation and set up
+## Installation
 
-The extension in question needs to have a `composer.json` file, specifically with the following:
+Use Composer to install the S3 Signer Library into your project:
 
-```json 
-{
-  "require": {
-    "arraypress/s3-signer": "*"
-  },
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/arraypress/s3-signer"
-    }
-  ]
-}
+```bash
+composer require arraypress/s3-signer
 ```
 
-Once set up, run `composer install --no-dev`. This should create a new `vendors/` folder
-with `arraypress/s3-signer/` inside.
+## Quick Start
 
-## Utilizing the S3 URL Presigning Tool
-
-The `Signer` class empowers you to generate secure, pre-signed URLs for objects stored on any S3-compatible storage provider, including CloudFlare R2 and others. This tool makes it seamless to share private content for a temporary duration. Here's a step-by-step guide to harness its capabilities:
-
-### Including the Vendor Library
-
-Before using the `Signer` class, you need to include the Composer-generated autoload file. This file ensures that the required dependencies and classes are loaded into your PHP script. You can include it using the following code:
-
-```php 
-// Include the Composer-generated autoload file.
-require_once dirname(__FILE__) . '/vendor/autoload.php';
-```
-
-### Generating Pre-signed URLs for CloudFlare R2
+After installation, include the Composer autoloader in your PHP script:
 
 ```php
-$access_key = 'YOUR_R2_ACCESS_KEY';   // Update with your actual CloudFlare R2 access key
-$secret_key = 'YOUR_R2_SECRET_KEY';   // Update with your actual CloudFlare R2 secret key
-$endpoint   = '{account_id}.r2.cloudflarestorage.com'; // Use your specific R2 account ID here
-$region     = 'auto';                 // For CloudFlare, set region as 'auto' when creating pre-signed URLs
-$bucket_name = 'my-bucket';           // Input your desired bucket name here
-$object_path = 'sample-file.zip';     // Specify the object's path you want to share
+require 'vendor/autoload.php';
+```
 
-// Set up the arguments for the Signer, including bucket and object_key
-$args = [
-    'access_key' => $access_key,
-    'secret_key' => $secret_key,
-    'endpoint'   => $endpoint,
-    'region'     => $region,
-    'bucket'     => $bucket_name,
-    'object_key' => $object_path
-];
+Create an instance of the `Signer` class with your S3 credentials and endpoint:
 
-// Creating a pre-signed URL with a standard 5-minute expiration
-$signed_url = get_object_url( $args );
-echo "Your Pre-Signed URL is: " . $signed_url . "\n";
+```php
+use ArrayPress\S3\Signer;
 
-// Creating a pre-signed URL with a 2-hour expiration
-$signed_url = get_object_url( $args, '', '', 120 );
-echo "Generated Pre-Signed URL with 2 hours validity: " . $signed_url . "\n";
+$accessKey = 'your-access-key-id';
+$secretKey = 'your-secret-access-key';
+$endpoint = '{account_id}.r2.cloudflarestorage.com'; // Or your S3-compatible service endpoint
+$region = 'auto';
 
-// Error handling callback (optional)
-$error_callback = function($e) {
-    // Handle the exception, e.g., log it
-    echo "Error generating URL: " . $e->getMessage();
-};
+$signer = new Signer( $accessKey, $secretKey, $endpoint, $region );
+```
+
+Generate a pre-signed URL for an S3 object:
+
+```php
+$bucket = 'your-bucket-name';
+$objectKey = 'mydownload.zip';
+$duration = 60; // URL is valid for 60 minutes
+
+$signedUrl = $signer->getObjectUrl( $bucket, $objectKey, $duration );
+
+echo "Pre-Signed URL: $signedUrl\n";
+```
+
+## Advanced Usage
+
+You can customize the behavior of the `Signer` class further by using the available setter methods:
+
+- **setRegion:** Define the S3 bucket's region.
+- **setPathStyle:** Toggle between path-style and virtual-hosted-style URLs.
+- **setExtraQueryString:** Append extra query parameters for advanced use cases.
+
+Example setting the region and using path-style URLs:
+
+```php
+$signer->setRegion( 'us-west-2' );
+$signer->setPathStyle( true );
+```
+
+## Supported Providers
+
+This library supports generating pre-signed URLs for AWS S3 and other S3-compatible storage solutions adhering to the SigV4 signing process. Supported providers include:
+
+* **AWS S3:** The original and most comprehensive cloud storage service.
+* **Cloudflare R2:** Offers compatibility with S3 APIs and competitive pricing.
+* **DigitalOcean Spaces:** Provides simple, scalable storage with S3-compatible APIs.
+* **Linode Object Storage:** Offers S3-compatible storage for storing and accessing data.
+* **And more:** Any S3-compatible service using SigV4 can work with this library.
+
+## Using the getObjectUrl Helper Function
+
+You can also use the `getObjectUrl` helper function for a more straightforward approach to generate pre-signed URLs:
+
+```php
+$signedUrl = getObjectUrl(
+    'your-access-key-id',
+    'your-secret-access-key',
+    's3.amazonaws.com',
+    'your-bucket-name',
+    'path/to/your/object',
+    60, // Duration in minutes
+    '', // Extra query string
+    'us-west-2', // Region
+    true // Use path style
+);
+
+echo "Pre-Signed URL using helper function: $signedUrl\n";
 ```
 
 ## Contributions
@@ -83,7 +100,11 @@ $error_callback = function($e) {
 Contributions to this library are highly appreciated. Raise issues on GitHub or submit pull requests for bug
 fixes or new features. Share feedback and suggestions for improvements.
 
-## License
+## License: GPLv2 or later
 
-This library is licensed under
-the [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html).
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.

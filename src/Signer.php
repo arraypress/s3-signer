@@ -27,20 +27,22 @@
  * This class offers a streamlined process for obtaining secure access to S3 resources, ideal for
  * applications requiring temporary access or sharing links.
  *
- * @package     arraypress/s3-signer
- * @copyright   Copyright (c) 2023, ArrayPress Limited
- * @license     GPL2+
- * @since       1.0.0
- * @author      David Sherlock
- * @description Generates pre-signed S3 URLs for temporary object access.
+ * @package       arraypress/s3-signer
+ * @copyright     Copyright (c) 2023, ArrayPress Limited
+ * @license       GPL2+
+ * @version       1.0.0
+ * @author        David Sherlock
+ * @description   Generates pre-signed S3 URLs for temporary object access.
  */
 
-namespace ArrayPress\Utils\S3;
+declare( strict_types=1 );
+
+namespace ArrayPress\S3;
 
 use InvalidArgumentException;
 
 /**
- * Check if the class `Signer` is defined, and if not, define it.
+ * Check if the class `S3Signer` is defined, and if not, define it.
  */
 if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 
@@ -56,14 +58,14 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @var string
 		 */
-		private string $access_key;
+		private string $accessKey;
 
 		/**
 		 * The S3 Secret Key associated with the access key for request authentication.
 		 *
 		 * @var string
 		 */
-		private string $secret_key;
+		private string $secretKey;
 
 		/**
 		 * The endpoint to which S3 requests are sent.
@@ -81,7 +83,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @var string
 		 */
-		private string $region = 'us-west-1';
+		private string $region;
 
 		/**
 		 * Specifies whether to use path-style or virtual-hosted style for the S3 URL.
@@ -104,14 +106,14 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @var bool
 		 */
-		private bool $use_path_style = true;
+		private bool $usePathStyle;
 
 		/**
 		 * Any extra query string to be appended to the S3 URL.
 		 *
 		 * @var string
 		 */
-		private string $extra_query_string = '';
+		private string $extraQueryString;
 
 		/**
 		 * The S3 bucket name.
@@ -125,14 +127,14 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @var string
 		 */
-		private string $object_key;
+		private string $objectKey;
 
 		/**
 		 * Duration for which the pre-signed URL should remain valid, in minutes.
 		 *
 		 * @var int
 		 */
-		private int $duration = 5;  // Default to 5 minutes
+		private int $duration;  // Default to 5 minutes
 
 		/**
 		 * Unix timestamp indicating when the current request was made.
@@ -145,99 +147,29 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 * Constructor for the Signer class, responsible for initializing properties
 		 * related to Amazon S3 service interactions.
 		 *
-		 * This constructor sets up the necessary properties required for generating pre-signed
-		 * S3 URLs and for handling other S3 related operations. It accepts an array of
-		 * arguments and merges them with default values. Each argument is validated for
-		 * type and value correctness. If any required argument is missing or invalid,
-		 * an InvalidArgumentException is thrown.
-		 *
-		 * @param array $args Associative array of arguments with the following keys:
-		 *                    - 'access_key' (string): Mandatory. The S3 Access Key ID used for authentication.
-		 *                    - 'secret_key' (string): Mandatory. The S3 Secret Key associated with the access key.
-		 *                    - 'endpoint' (string): Mandatory. The S3 server endpoint URL.
-		 *                    - 'region' (string): Optional. The region where the S3 bucket resides. Default is 'us-west-1'.
-		 *                    - 'use_path_style' (bool): Optional. Flag to indicate whether to use path-style URLs. Default is true.
-		 *                    - 'extra_query_string' (string): Optional. Additional query string parameters to append to the URL.
-		 *                    - 'bucket' (string): Optional. The name of the S3 bucket.
-		 *                    - 'object_key' (string): Optional. The key/path of the object within the S3 bucket.
-		 *                    - 'duration' (int): Optional. Duration in minutes for which the pre-signed URL is valid. Must be a positive integer.
+		 * @param string $accessKey        The S3 Access Key ID used for authentication.
+		 * @param string $secretKey        The S3 Secret Key associated with the access key.
+		 * @param string $endpoint         The S3 server endpoint URL.
+		 * @param string $region           The region where the S3 bucket resides. Default is 'us-west-1'.
+		 * @param bool   $usePathStyle     Flag to indicate whether to use path-style URLs. Default is true.
+		 * @param string $extraQueryString Additional query string parameters to append to the URL.
 		 *
 		 * @throws InvalidArgumentException If any mandatory argument is empty or if an argument is of an incorrect type.
 		 */
-		public function __construct( array $args ) {
-			$defaults = [
-				'access_key'         => '',
-				'secret_key'         => '',
-				'endpoint'           => '',
-				'region'             => 'us-west-1',
-				'use_path_style'     => true,
-				'extra_query_string' => '',
-				'bucket'             => '',
-				'object_key'         => '',
-				'duration'           => 5
-			];
-
-			$args = array_merge( $defaults, $args );
-
-			// Loop through the arguments and trim only if the value is a string
-			foreach ( $args as $key => $value ) {
-				if ( is_string( $value ) ) {
-					$args[ $key ] = trim( $value );
-				}
-			}
-
-			// Validate each argument individually
-			if ( empty( $args['access_key'] ) || ! is_string( $args['access_key'] ) ) {
-				throw new InvalidArgumentException( "Access Key is required and cannot be empty." );
-			}
-
-			if ( empty( $args['secret_key'] ) || ! is_string( $args['secret_key'] ) ) {
-				throw new InvalidArgumentException( "Secret Key is required and cannot be empty." );
-			}
-
-			if ( empty( $args['endpoint'] ) || ! is_string( $args['endpoint'] ) ) {
-				throw new InvalidArgumentException( "Endpoint is required and cannot be empty." );
-			}
-
-			if ( empty( $args['region'] ) || ! is_string( $args['region'] ) ) {
-				throw new InvalidArgumentException( "Region is required and cannot be empty." );
-			}
-
-			if ( ! is_bool( $args['use_path_style'] ) ) {
-				throw new InvalidArgumentException( "use_path_style must be a boolean." );
-			}
-
-			if ( ! is_string( $args['extra_query_string'] ) ) {
-				throw new InvalidArgumentException( "extra_query_string must be a string." );
-			}
-
-			if ( ! is_string( $args['bucket'] ) ) {
-				throw new InvalidArgumentException( "Bucket must be a string." );
-			}
-
-			if ( ! is_string( $args['object_key'] ) ) {
-				throw new InvalidArgumentException( "Object key must be a string." );
-			}
-
-			Validate::access_key( $args['access_key'] );
-			Validate::secret_key( $args['secret_key'] );
-			Validate::endpoint( $args['endpoint'] );
-			Validate::region( $args['region'] );
-			Validate::extra_query_string( $args['extra_query_string'] );
-			Validate::bucket( $args['bucket'] );
-			Validate::object_key( $args['object_key'] );
-			Validate::duration( $args['duration'] );
-
-			// Assign validated values to class properties
-			$this->access_key         = $args['access_key'];
-			$this->secret_key         = $args['secret_key'];
-			$this->endpoint           = $args['endpoint'];
-			$this->region             = $args['region'];
-			$this->use_path_style     = $args['use_path_style'];
-			$this->extra_query_string = $args['extra_query_string'];
-			$this->bucket             = $args['bucket'];
-			$this->object_key         = $args['object_key'];
-			$this->duration           = $args['duration'];
+		public function __construct(
+			string $accessKey,
+			string $secretKey,
+			string $endpoint,
+			string $region = 'us-west-1',
+			bool $usePathStyle = true,
+			string $extraQueryString = ''
+		) {
+			$this->setAccessKey( $accessKey );
+			$this->setSecretKey( $secretKey );
+			$this->setEndpoint( $endpoint );
+			$this->setRegion( $region );
+			$this->setPathStyle( $usePathStyle );
+			$this->setExtraQueryString( $extraQueryString );
 		}
 
 		/**
@@ -250,88 +182,104 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 * 1. Path-style: `https://[endpoint]/[bucket]/[object]`
 		 * 2. Virtual-hosted style: `https://[bucket].[endpoint]/[object]`
 		 *
-		 * The `use_path_style` property determines which style to use.
+		 * The `usePathStyle` property determines which style to use.
 		 *
-		 * @param string   $bucket     Optional. The name of the S3 bucket containing the object.
-		 * @param string   $object_key Optional. The key of the object within the bucket.
-		 * @param int|null $duration   Optional. Duration for which the generated URL should be valid, in minutes.
+		 * @param string   $bucket    The name of the S3 bucket containing the object.
+		 * @param string   $objectKey The key of the object within the bucket.
+		 * @param int|null $duration  Optional. Duration for which the generated URL should be valid, in minutes.
 		 *
 		 * @return string The pre-signed S3 URL.
-		 * @throws InvalidArgumentException If the bucket or object name provided is empty or invalid.
+		 * @throws InvalidArgumentException If the bucket or object name is empty or invalid.
 		 */
-		public function get_object_url( string $bucket = '', string $object_key = '', ?int $duration = null ): string {
+		public function getObjectUrl( string $bucket, string $objectKey, int $duration = 5 ): string {
 			$this->time = time();
 
-			$this->bucket     = ! empty( $bucket ) ? trim( $bucket ) : $this->bucket;
-			$this->object_key = ! empty( $object_key ) ? trim( $object_key ) : $this->object_key;
+			$this->bucket    = trim( $bucket );
+			$this->objectKey = trim( $objectKey );
+			$this->duration  = $duration;
 
-			$this->object_key = Serialization::encode_object_name( $this->object_key );
-			$this->duration   = $this->convert_duration_to_seconds( $duration !== null ? $duration : $this->duration );
-
-			// Validate bucket and object.
-			if ( empty( $this->bucket ) ) {
-				throw new InvalidArgumentException( "The bucket name provided is empty or invalid." );
+			// Check if $bucket and $objectKey are empty.
+			if ( empty( $this->bucket ) || empty( $this->objectKey ) ) {
+				throw new InvalidArgumentException( 'Bucket and object name must not be empty.' );
 			}
 
-			if ( empty( $this->object_key ) ) {
-				throw new InvalidArgumentException( "The object name provided is empty or invalid." );
-			}
-
+			// Validate bucket, object and duration.
 			Validate::bucket( $this->bucket );
-			Validate::object_key( $this->object_key );
+			Validate::objectKey( $this->objectKey );
+			Validate::duration( $this->duration );
 
-			$url = $this->use_path_style
-				? 'https://' . $this->endpoint . '/' . $this->bucket . '/' . $this->object_key . '?'
-				: 'https://' . $this->bucket . '.' . $this->endpoint . '/' . $this->object_key . '?';
+			$this->objectKey = Serialization::encodeObjectName( $this->objectKey );
 
-			$url .= $this->get_query_strings();
-			$url .= '&X-Amz-Signature=' . $this->generate_signature();
+			// Convert duration to seconds directly as the default value is already ensured by the method signature
+			$this->duration *= 60;
+
+			$url = $this->usePathStyle
+				? 'https://' . $this->endpoint . '/' . $this->bucket . '/' . $this->objectKey . '?'
+				: 'https://' . $this->bucket . '.' . $this->endpoint . '/' . $this->objectKey . '?';
+
+			$url .= $this->getQueryStrings();
+			$url .= '&X-Amz-Signature=' . $this->generateSignature();
 
 			return $url;
 		}
 
 		/**
-		 * Checks if an object exists in the specified S3 bucket.
+		 * Sets the AWS S3 Access Key ID.
 		 *
-		 * @param string $bucket     The name of the S3 bucket.
-		 * @param string $object_key The key of the object within the bucket.
-		 *
-		 * @return bool True if the object exists; false otherwise.
+		 * @param string $accessKey The AWS Access Key ID.
 		 */
-		public function object_exists( string $bucket = '', string $object_key = '', ?int $duration = null ): bool {
-
-			// Check if WordPress functions are available
-			if ( function_exists( 'wp_safe_remote_head' ) && function_exists( 'wp_remote_retrieve_response_code' ) ) {
-				// Get the pre-signed URL for the object
-				$url = $this->get_object_url( $bucket, $object_key, $duration );
-
-				// Perform an HTTP HEAD request to check if the object exists
-				$response = wp_safe_remote_head( $url );
-
-				// Check the HTTP response status code
-				if ( is_wp_error( $response ) ) {
-					// Error occurred, object might not exist or other issues
-					return false;
-				} else {
-					// Check if the response code is 200 OK, indicating the object exists
-					return wp_remote_retrieve_response_code( $response ) === 200;
-				}
-			} else {
-				// WordPress functions are not available, cannot perform the check
-				return false;
-			}
-
+		public function setAccessKey( string $accessKey ): void {
+			Validate::accessKey( $accessKey ); // Validate the access key
+			$this->accessKey = trim( $accessKey );
 		}
 
 		/**
-		 * Converts a given duration in minutes to seconds.
+		 * Sets the AWS S3 Secret Access Key.
 		 *
-		 * @param int $duration The duration in minutes.
-		 *
-		 * @return int Returns the duration in seconds.
+		 * @param string $secretKey The AWS Secret Access Key.
 		 */
-		protected function convert_duration_to_seconds( int $duration ): int {
-			return $duration * 60;
+		public function setSecretKey( string $secretKey ): void {
+			Validate::secretKey( $secretKey ); // Validate the secret key
+			$this->secretKey = trim( $secretKey );
+		}
+
+		/**
+		 * Sets the endpoint URL for S3 requests.
+		 *
+		 * @param string $endpoint The new endpoint URL.
+		 */
+		public function setEndpoint( string $endpoint ): void {
+			$this->endpoint = trim( $endpoint );
+			Validate::endpoint( $this->endpoint ); // Ensure the new endpoint is valid
+		}
+
+		/**
+		 * Sets the AWS S3 region.
+		 *
+		 * @param string $region The AWS region where the S3 bucket resides.
+		 */
+		public function setRegion( string $region ): void {
+			$this->region = trim( $region );
+			Validate::region( $this->region ); // Ensure the new region is valid
+		}
+
+		/**
+		 * Sets the URL style for the S3 request.
+		 *
+		 * @param bool $usePathStyle Indicates whether to use path-style URLs.
+		 */
+		public function setPathStyle( bool $usePathStyle ): void {
+			$this->usePathStyle = $usePathStyle;
+		}
+
+		/**
+		 * Sets extra query string parameters to be appended to the S3 URL.
+		 *
+		 * @param string $extraQueryString The extra query string parameters.
+		 */
+		public function setExtraQueryString( string $extraQueryString ): void {
+			$this->extraQueryString = trim( $extraQueryString );
+			Validate::extraQueryString( $this->extraQueryString ); // Ensure the new query string is valid
 		}
 
 		/**
@@ -339,16 +287,16 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @return string
 		 */
-		protected function get_canonical_request(): string {
+		protected function getCanonicalRequest(): string {
 			$request = "GET\n";
 
-			$request .= $this->use_path_style
-				? '/' . $this->bucket . '/' . $this->object_key . "\n"
-				: '/' . $this->object_key . "\n";
+			$request .= $this->usePathStyle
+				? '/' . $this->bucket . '/' . $this->objectKey . "\n"
+				: '/' . $this->objectKey . "\n";
 
-			$request .= $this->get_query_strings() . "\n";
+			$request .= $this->getQueryStrings() . "\n";
 
-			$request .= $this->use_path_style
+			$request .= $this->usePathStyle
 				? 'host:' . $this->endpoint . "\n\n"
 				: 'host:' . $this->bucket . '.' . $this->endpoint . "\n\n";
 
@@ -363,15 +311,15 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @return string
 		 */
-		protected function get_query_strings(): string {
+		protected function getQueryStrings(): string {
 			$url = 'X-Amz-Algorithm=AWS4-HMAC-SHA256';
-			$url .= '&X-Amz-Credential=' . urlencode( $this->access_key . '/' . $this->get_credential() );
+			$url .= '&X-Amz-Credential=' . urlencode( $this->accessKey . '/' . $this->getCredential() );
 			$url .= '&X-Amz-Date=' . gmdate( 'Ymd\THis\Z', $this->time );
 			$url .= '&X-Amz-Expires=' . $this->duration;
 			$url .= '&X-Amz-SignedHeaders=host';
 
-			if ( ! empty( $this->extra_query_string ) ) {
-				$url .= '&' . $this->extra_query_string . '=';
+			if ( ! empty( $this->extraQueryString ) ) {
+				$url .= '&' . $this->extraQueryString . '=';
 			}
 
 			return $url;
@@ -382,7 +330,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @return string
 		 */
-		protected function get_credential(): string {
+		protected function getCredential(): string {
 			$credential = date( 'Ymd', $this->time ) . '/';
 			$credential .= $this->region . '/s3/aws4_request';
 
@@ -394,11 +342,11 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @return string
 		 */
-		protected function get_string_to_sign(): string {
+		protected function getStringToSign(): string {
 			$string = 'AWS4-HMAC-SHA256' . "\n";
 			$string .= gmdate( 'Ymd\THis\Z', $this->time ) . "\n";
-			$string .= $this->get_credential() . "\n";
-			$string .= $this->hex16( hash( 'sha256', $this->get_canonical_request(), true ) );
+			$string .= $this->getCredential() . "\n";
+			$string .= $this->hex16( hash( 'sha256', $this->getCanonicalRequest(), true ) );
 
 			return $string;
 		}
@@ -406,11 +354,11 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		/**
 		 * Base16 Hex
 		 *
-		 * @param $value
+		 * @param string $value The value to convert to hexadecimal.
 		 *
-		 * @return string
+		 * @return string The hexadecimal representation of the input value.
 		 */
-		protected function hex16( $value ): string {
+		protected function hex16( string $value ): string {
 			$result = unpack( 'H*', $value );
 
 			return reset( $result );
@@ -421,14 +369,14 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 *
 		 * @return string
 		 */
-		protected function generate_signature(): string {
-			$date_key                = hash_hmac( 'sha256', date( 'Ymd', $this->time ), 'AWS4' . $this->secret_key, true );
-			$date_region_key         = hash_hmac( 'sha256', $this->region, $date_key, true );
-			$date_region_service_key = hash_hmac( 'sha256', 's3', $date_region_key, true );
-			$signing_key             = hash_hmac( 'sha256', 'aws4_request', $date_region_service_key, true );
-			$string_to_sign          = $this->get_string_to_sign();
+		protected function generateSignature(): string {
+			$dateKey              = hash_hmac( 'sha256', date( 'Ymd', $this->time ), 'AWS4' . $this->secretKey, true );
+			$dateRegionKey        = hash_hmac( 'sha256', $this->region, $dateKey, true );
+			$dateRegionServiceKey = hash_hmac( 'sha256', 's3', $dateRegionKey, true );
+			$signingKey           = hash_hmac( 'sha256', 'aws4_request', $dateRegionServiceKey, true );
+			$stringToSign         = $this->getStringToSign();
 
-			return $this->hex16( hash_hmac( 'sha256', $string_to_sign, $signing_key, true ) );
+			return $this->hex16( hash_hmac( 'sha256', $stringToSign, $signingKey, true ) );
 		}
 
 	}
