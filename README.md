@@ -52,18 +52,76 @@ echo "Pre-Signed URL: $signedUrl\n";
 
 ## Advanced Usage
 
-You can customize the behavior of the `Signer` class further by using the available setter methods:
+You can customize the behavior of the Signer class further by using the available setter methods. These methods allow you to dynamically set the properties of your Signer instance to cater to specific requirements of your S3 or S3-compatible service operations.
 
-- **setRegion:** Define the S3 bucket's region.
-- **setPathStyle:** Toggle between path-style and virtual-hosted-style URLs.
-- **setExtraQueryString:** Append extra query parameters for advanced use cases.
+### Set Access Key ID
+Set the AWS S3 Access Key ID to authenticate your requests.
 
-Example setting the region and using path-style URLs:
+```php
+$signer->setAccessKey( 'your-access-key-id' );
+```
+
+This method validates and sets the Access Key ID used for S3 operations, ensuring it meets AWS's required format.
+
+### Set Secret Access Key
+Set the AWS S3 Secret Access Key corresponding to your Access Key ID.
+
+```php
+$signer->setSecretKey( 'your-secret-access-key' );
+```
+
+The Secret Access Key is crucial for signing your requests securely. This method also validates the key to ensure it adheres to AWS standards.
+
+### Set Endpoint
+Specify the endpoint URL of your S3 or S3-compatible service.
+
+```php
+$signer->setEndpoint( 's3.amazonaws.com' );
+```
+
+Use this method to set the endpoint to which the S3 requests are sent. It's validated to ensure proper URL format.
+
+### Set Region
+Define the AWS region where your S3 bucket resides.
 
 ```php
 $signer->setRegion( 'us-west-2' );
-$signer->setPathStyle( true );
 ```
+
+Setting the correct region is essential for constructing the signed URL and ensuring it routes to the right data center.
+
+### Set Path Style
+Toggle between using path-style and virtual-hosted-style URLs.
+
+```php
+$signer->setPathStyle( true ); // Use path-style URLs
+```
+
+Path-style URLs are gradually being phased out in favor of virtual-hosted-style URLs by AWS, but they may still be required or preferred in certain situations or with specific S3-compatible services.
+
+### Set Extra Query String
+Append additional query parameters to your pre-signed URL.
+
+```php
+$signer->setExtraQueryString( 'versionId=1234' );
+```
+
+This method allows you to add extra query string parameters, providing flexibility for version control, access management, or other service-specific features.
+
+## Example Usage
+Here's how you might use these methods together to configure a Signer instance for generating a pre-signed URL:
+
+```php
+$signer = new Signer( 'access-key-id', 'secret-access-key', 's3.amazonaws.com' );
+$signer->setRegion( 'us-west-2' ); 
+$signer->setPathStyle( false ); // Use virtual-hosted-style URLs
+$signer->setExtraQueryString( 'response-content-disposition=attachment' );
+
+$signedUrl = $signer->getObjectUrl( 'your-bucket-name', 'path/to/your/object', 60 );
+echo "Pre-Signed URL: $signedUrl\n"; 
+```
+
+In this example, we've configured the Signer to generate a virtual-hosted-style URL for an object, valid for 60 minutes, and with an extra query parameter instructing S3 to prompt the user to download the object when accessed.
 
 ## Supported Providers
 
