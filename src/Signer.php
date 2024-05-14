@@ -331,7 +331,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 * @return string
 		 */
 		protected function getCredential(): string {
-			$credential = date( 'Ymd', $this->time ) . '/';
+			$credential = gmdate( 'Ymd', $this->time ) . '/';
 			$credential .= $this->region . '/s3/aws4_request';
 
 			return $credential;
@@ -370,7 +370,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Signer' ) ) :
 		 * @return string
 		 */
 		protected function generateSignature(): string {
-			$dateKey              = hash_hmac( 'sha256', date( 'Ymd', $this->time ), 'AWS4' . $this->secretKey, true );
+			$dateKey              = hash_hmac( 'sha256', gmdate( 'Ymd', $this->time ), 'AWS4' . $this->secretKey, true );
 			$dateRegionKey        = hash_hmac( 'sha256', $this->region, $dateKey, true );
 			$dateRegionServiceKey = hash_hmac( 'sha256', 's3', $dateRegionKey, true );
 			$signingKey           = hash_hmac( 'sha256', 'aws4_request', $dateRegionServiceKey, true );

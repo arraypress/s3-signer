@@ -10,7 +10,10 @@
       "homepage": "https://arraypress.com/"
     }
   ],
-  "minimum-stability": "stable",
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  },
   "require": {
     "php": "^7.4 || ^8.0",
     "arraypress/s3-utilities": "*"
@@ -20,7 +23,9 @@
       "ArrayPress\\S3\\": "src/"
     },
     "files": [
-      "src/Functions.php"
+      "src/Utilities.php"
     ]
-  }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }
