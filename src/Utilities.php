@@ -14,6 +14,8 @@ declare( strict_types=1 );
 namespace ArrayPress\S3;
 
 use InvalidArgumentException;
+use function is_callable;
+use function call_user_func;
 
 if ( ! function_exists( 'getObjectUrl' ) ) {
 	/**
