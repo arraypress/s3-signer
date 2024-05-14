@@ -40,6 +40,14 @@ declare( strict_types=1 );
 namespace ArrayPress\S3;
 
 use InvalidArgumentException;
+use function gmdate;
+use function hash;
+use function hash_hmac;
+use function reset;
+use function time;
+use function trim;
+use function unpack;
+use function urlencode;
 
 /**
  * Check if the class `S3Signer` is defined, and if not, define it.
