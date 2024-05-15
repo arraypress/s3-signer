@@ -16,21 +16,21 @@
  *
  * @example
  * // Basic Usage:
- * $signer = new Signer($accessKey, $secretKey, $endpoint);
- * $signedUrl = $signer->get_object_url('my-bucket', 'path/to/my-object');
+ * $signer = new Signer( $accessKey, $secretKey, $endpoint ) ;
+ * $signedUrl = $signer->getObjectUrl( 'my-bucket', 'path/to/my-object' );
  *
  * @example
  * // With Custom Duration:
- * $signer = new Signer($accessKey, $secretKey, $endpoint);
- * $signedUrl = $signer->get_object_url('my-bucket', 'path/to/my-object', 60); // 1 hour validity
+ * $signer = new Signer( $accessKey, $secretKey, $endpoint ;
+ * $signedUrl = $signer->getObjectUrl( 'my-bucket', 'path/to/my-object', 60 ); // 1 hour validity
  *
  * This class offers a streamlined process for obtaining secure access to S3 resources, ideal for
  * applications requiring temporary access or sharing links.
  *
  * @package       arraypress/s3-signer
- * @copyright     Copyright (c) 2023, ArrayPress Limited
+ * @copyright     Copyright (c) 2024, ArrayPress Limited
  * @license       GPL2+
- * @version       1.0.0
+ * @version       0.1.0
  * @author        David Sherlock
  * @description   Generates pre-signed S3 URLs for temporary object access.
  */
