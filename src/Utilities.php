@@ -2,10 +2,10 @@
 /**
  * These helper functions provide utilities for working with S3 Signer class.
  *
- * @package     ArrayPress/s3-signer
+ * @since       1.0.0
  * @copyright   Copyright (c) 2024, ArrayPress Limited
  * @license     GPL2+
- * @since       1.0.0
+ * @package     ArrayPress/s3-signer
  * @author      David Sherlock
  */
 
@@ -14,8 +14,8 @@ declare( strict_types=1 );
 namespace ArrayPress\S3;
 
 use InvalidArgumentException;
-use function is_callable;
 use function call_user_func;
+use function is_callable;
 
 if ( ! function_exists( 'getObjectUrl' ) ) {
 	/**
@@ -77,5 +77,49 @@ if ( ! function_exists( 'getObjectUrl' ) ) {
 			return null; // Return null on failure
 		}
 	}
+}
 
+if ( ! function_exists( 'get_object_url' ) ) {
+	/**
+	 * Alias (vanity) version of getObjectUrl function.
+	 *
+	 * @param string        $accessKey        S3 Access Key ID for authentication.
+	 * @param string        $secretKey        S3 Secret Access Key corresponding to the Access Key ID.
+	 * @param string        $endpoint         Endpoint URL of the S3 service.
+	 * @param string        $bucket           The S3 bucket name.
+	 * @param string        $objectKey        The S3 object key.
+	 * @param int           $duration         Validity period of the URL in minutes. Must be a positive integer. Defaults to 5 minutes.
+	 * @param string        $extraQueryString Additional query string parameters to append to the URL. Defaults to an empty string.
+	 * @param string        $region           (Optional) Region of the S3 bucket. Defaults to 'us-west-1'.
+	 * @param bool          $usePathStyle     (Optional) Specifies whether to use path-style URLs. Defaults to true.
+	 * @param callable|null $errorCallback    (Optional) A callback function that is called if an error occurs, with the exception object as an argument.
+	 *
+	 * @return string|null The signed URL on success, or null on failure.
+	 * @throws InvalidArgumentException If mandatory arguments are missing or invalid.
+	 */
+	function get_object_url(
+		string $accessKey,
+		string $secretKey,
+		string $endpoint,
+		string $bucket,
+		string $objectKey,
+		int $duration = 5,
+		string $extraQueryString = '',
+		string $region = 'us-west-1',
+		bool $usePathStyle = true,
+		?callable $errorCallback = null
+	): ?string {
+		return getObjectUrl(
+			$accessKey,
+			$secretKey,
+			$endpoint,
+			$bucket,
+			$objectKey,
+			$duration,
+			$extraQueryString,
+			$region,
+			$usePathStyle,
+			$errorCallback
+		);
+	}
 }
