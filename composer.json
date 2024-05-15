@@ -23,7 +23,7 @@
       "ArrayPress\\S3\\": "src/"
     },
     "files": [
-      "src/Utilities.php"
+      "src/Functions.php"
     ]
   },
   "minimum-stability": "dev",

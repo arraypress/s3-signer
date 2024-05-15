@@ -79,6 +79,8 @@ if ( ! function_exists( 'getObjectUrl' ) ) {
 	}
 }
 
+/** Aliases *******************************************************************/
+
 if ( ! function_exists( 'get_object_url' ) ) {
 	/**
 	 * Alias (vanity) version of getObjectUrl function.
