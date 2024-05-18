@@ -28,7 +28,7 @@ require 'vendor/autoload.php';
 Create an instance of the `Signer` class with your S3 credentials and endpoint:
 
 ```php
-use ArrayPress\S3\Signer;
+use ArrayPress\S3\Signer\Signer;
 
 $accessKey = 'your-access-key-id';
 $secretKey = 'your-secret-access-key';

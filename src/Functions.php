@@ -11,7 +11,7 @@
 
 declare( strict_types=1 );
 
-namespace ArrayPress\S3;
+namespace ArrayPress\S3\Signer;
 
 use InvalidArgumentException;
 use function call_user_func;

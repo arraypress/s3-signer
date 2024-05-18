@@ -37,8 +37,10 @@
 
 declare( strict_types=1 );
 
-namespace ArrayPress\S3;
+namespace ArrayPress\S3\Signer;
 
+use ArrayPress\S3\Utils\Serialization;
+use ArrayPress\S3\Utils\Validate;
 use InvalidArgumentException;
 use function gmdate;
 use function hash;
